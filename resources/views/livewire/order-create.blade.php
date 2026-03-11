@@ -107,7 +107,11 @@
                                                     <select wire:model.live="items.{{ $index }}.product_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('items.'.$index.'.product_id') border-red-500 @enderror">
                                                         <option value="">Select Product</option>
                                                         @foreach($products as $product)
-                                                            <option value="{{ $product->id }}">{{ $product->name }} (₹{{ number_format($product->price, 2) }})</option>
+                                                            <option value="{{ $product->id }}">
+                                                                {{ $product->name }} 
+                                                                (₹{{ number_format($product->price, 2) }})
+                                                                @if($product->tax_rate) - Tax: {{ $product->tax_rate }}% @endif
+                                                            </option>
                                                         @endforeach
                                                     </select>
                                                     @error('items.'.$index.'.product_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -134,11 +138,18 @@
                                                 </div>
                                             </div>
 
-                                            @if(isset($item['quantity']) && isset($item['price']))
-                                                <div class="mt-2 text-right">
-                                                    <span class="text-sm font-medium text-gray-900">
-                                                        Item Total: ₹{{ number_format(($item['quantity'] * $item['price']) - ($item['discount'] ?? 0), 2) }}
-                                                    </span>
+                                            @if(isset($item['quantity']) && isset($item['price']) && isset($item['product_id']))
+                                                @php
+                                                    $product = \App\Models\Product::find($item['product_id']);
+                                                    $itemSubtotal = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
+                                                    $taxRate = $product ? $product->getTaxRate() : 18;
+                                                    $itemTax = ($itemSubtotal * $taxRate) / 100;
+                                                    $itemTotal = $itemSubtotal + $itemTax;
+                                                @endphp
+                                                <div class="mt-2 text-right text-sm">
+                                                    <div class="text-gray-600">Subtotal: ₹{{ number_format($itemSubtotal, 2) }}</div>
+                                                    <div class="text-gray-600">Tax ({{ $taxRate }}%): ₹{{ number_format($itemTax, 2) }}</div>
+                                                    <div class="font-medium text-gray-900">Item Total: ₹{{ number_format($itemTotal, 2) }}</div>
                                                 </div>
                                             @endif
                                         </div>
@@ -197,7 +208,7 @@
                                     </div>
 
                                     <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600">Tax ({{ $tax_rate }}%)</span>
+                                        {{-- <span class="text-gray-600">Tax ({{ $tax_rate }}%)</span> --}}
                                         <span class="font-medium">₹{{ number_format($tax, 2) }}</span>
                                     </div>
 
@@ -245,6 +256,99 @@
                                         </select>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping Provider -->
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-4 py-5 sm:p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Shipping Options</h3>
+                                
+                                @if($available_shipping_providers->count() > 0)
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Shipping Provider</label>
+                                            <select wire:model.live="selected_shipping_provider_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                <option value="">Select Provider (Optional)</option>
+                                                @foreach($available_shipping_providers as $provider)
+                                                    <option value="{{ $provider->id }}">{{ $provider->display_name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <p class="mt-1 text-xs text-gray-500">Choose a shipping provider to create shipment automatically</p>
+                                        </div>
+
+                                        @if($shipping_provider_selected)
+                                            <div class="rounded-md bg-blue-50 p-4">
+                                                <div class="flex">
+                                                    <div class="flex-shrink-0">
+                                                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="ml-3 flex-1">
+                                                        <h3 class="text-sm font-medium text-blue-800">
+                                                            {{ $shipping_provider_selected->display_name }} Selected
+                                                        </h3>
+                                                        <div class="mt-2 text-sm text-blue-700">
+                                                            <p>Provider: {{ $shipping_provider_selected->name }}</p>
+                                                        </div>
+                                                        
+                                                        <div class="mt-3">
+                                                            <label class="flex items-center">
+                                                                <input type="checkbox" wire:model="create_shipment" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                                                <span class="ml-2 text-sm font-medium text-blue-800">
+                                                                    Create shipment on {{ $shipping_provider_selected->display_name }} automatically
+                                                                </span>
+                                                            </label>
+                                                            <p class="ml-6 mt-1 text-xs text-blue-600">
+                                                                When checked, shipment will be created on {{ $shipping_provider_selected->display_name }} when order is saved
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if($create_shipment)
+                                                <div class="rounded-md bg-green-50 border-l-4 border-green-400 p-4">
+                                                    <div class="flex">
+                                                        <div class="flex-shrink-0">
+                                                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="ml-3">
+                                                            <p class="text-sm text-green-700">
+                                                                <strong>Shipment will be created automatically</strong><br>
+                                                                Order will be synced with {{ $shipping_provider_selected->display_name }} and tracking number will be generated.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="rounded-md bg-yellow-50 p-4">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-yellow-800">No Shipping Providers Configured</h3>
+                                                <div class="mt-2 text-sm text-yellow-700">
+                                                    <p>Please configure shipping providers in organization settings to enable automatic shipment creation.</p>
+                                                    @if(auth()->user()->isAdmin())
+                                                        <a href="{{ route('organization.edit') }}" class="font-medium underline text-yellow-700 hover:text-yellow-600 mt-2 inline-block">
+                                                            Configure Shipping Providers
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 

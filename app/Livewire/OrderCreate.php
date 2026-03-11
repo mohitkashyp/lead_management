@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\OrderItem;
+use App\Models\ShippingProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -30,7 +31,13 @@ class OrderCreate extends Component
     public $notes;
     public $discount = 0;
     public $shipping_cost = 0;
-    public $tax_rate = 18; // 18% GST
+    // Removed: public $tax_rate = 18; // Tax is now per-product
+    
+    // Shipping provider
+    public $available_shipping_providers = [];
+    public $selected_shipping_provider_id;
+    public $create_shipment = false;
+    public $shipping_provider_selected = null;
     
     // Order items
     public $items = [];
@@ -60,6 +67,9 @@ class OrderCreate extends Component
             ->where('is_active', true)
             ->get();
 
+        // Load organization's enabled shipping providers
+        $this->loadAvailableShippingProviders();
+
         if ($lead) {
             $this->lead_id = $lead;
             $this->lead = Lead::with('customer')->findOrFail($lead);
@@ -79,6 +89,39 @@ class OrderCreate extends Component
         // Add one empty item by default
         if (empty($this->items)) {
             $this->addItem();
+        }
+    }
+
+    public function loadAvailableShippingProviders()
+    {
+        $organization = Auth::user()->currentOrganization;
+        $settings = $organization->settings ?? [];
+        
+        // Get enabled shipping provider IDs
+        $enabledProviderIds = $settings['shipping_providers'] ?? [];
+        
+        if (!empty($enabledProviderIds)) {
+            $this->available_shipping_providers = ShippingProvider::whereIn('id', $enabledProviderIds)
+                ->where('is_active', true)
+                ->get();
+        } else {
+            $this->available_shipping_providers = collect([]);
+        }
+        
+        // Auto-select first provider if only one available
+        if ($this->available_shipping_providers && $this->available_shipping_providers->count() === 1) {
+            $this->selected_shipping_provider_id = $this->available_shipping_providers->first()->id;
+            $this->shipping_provider_selected = $this->available_shipping_providers->first();
+        }
+    }
+
+    public function updatedSelectedShippingProviderId($value)
+    {
+        if ($value) {
+            $this->shipping_provider_selected = ShippingProvider::find($value);
+        } else {
+            $this->shipping_provider_selected = null;
+            $this->create_shipment = false;
         }
     }
 
@@ -173,7 +216,19 @@ class OrderCreate extends Component
 
     public function getTaxProperty()
     {
-        return ($this->subtotal * $this->tax_rate) / 100;
+        $totalTax = 0;
+        foreach ($this->items as $item) {
+            if (isset($item['product_id']) && isset($item['quantity']) && isset($item['price'])) {
+                $product = Product::find($item['product_id']);
+                if ($product) {
+                    $itemTotal = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
+                    $taxRate = $product->getTaxRate();
+                    $itemTax = ($itemTotal * $taxRate) / 100;
+                    $totalTax += $itemTax;
+                }
+            }
+        }
+        return $totalTax;
     }
 
     public function getTotalProperty()
@@ -224,8 +279,10 @@ class OrderCreate extends Component
             foreach ($this->items as $item) {
                 $product = Product::find($item['product_id']);
                 
-                $itemTotal = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
-                $itemTax = ($itemTotal * $this->tax_rate) / 100;
+                $itemSubtotal = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
+                $taxRate = $product->getTaxRate();
+                $itemTax = ($itemSubtotal * $taxRate) / 100;
+                $itemTotal = $itemSubtotal + $itemTax;
                 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -235,8 +292,9 @@ class OrderCreate extends Component
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'discount' => $item['discount'] ?? 0,
+                    'tax_rate' => $taxRate,
                     'tax' => $itemTax,
-                    'total' => $itemTotal + $itemTax,
+                    'total' => $itemTotal,
                 ]);
 
                 // Decrease stock
@@ -265,6 +323,70 @@ class OrderCreate extends Component
                 }
             }
 
+            // Create shipment if requested
+          /*   if ($this->create_shipment && $this->selected_shipping_provider_id) {
+                try {
+                    $provider = ShippingProvider::find($this->selected_shipping_provider_id);
+                    
+                    // Create shipment record
+                    $shipment = \App\Models\Shipment::create([
+                        'order_id' => $order->id,
+                        'shipping_provider_id' => $provider->id,
+                        'status' => 'pending',
+                    ]);
+
+                    // Get organization's provider config
+                    $organization = Auth::user()->currentOrganization;
+                    $settings = $organization->settings ?? [];
+                    $providerKey = strtolower(str_replace(' ', '_', $provider->name));
+                    $providerConfig = $settings['shipping_config'][$providerKey] ?? null;
+
+                    if ($providerConfig) {
+                        // Initialize appropriate shipping service based on provider
+                        if (strtolower($provider->name) === 'shiprocket') {
+                            $shippingService = new \App\Services\ShiprocketService(
+                                $providerConfig['api_key'],
+                                $providerConfig['api_secret'],
+                                $providerConfig['api_endpoint'] ?? $provider->api_endpoint
+                            );
+                            
+                            // Create order on Shiprocket
+                            $response = $shippingService->createOrder($order);
+                            
+                            if ($response && isset($response['order_id'])) {
+                                $shipment->update([
+                                    'tracking_number' => $response['order_id'],
+                                    'status' => 'created',
+                                    'tracking_history' => json_encode([$response]),
+                                ]);
+                            }
+                        } elseif (strtolower($provider->name) === 'shipmozo') {
+                            $shippingService = new \App\Services\ShipmozoService(
+                                $providerConfig['api_key'],
+                                $providerConfig['api_endpoint'] ?? $provider->api_endpoint
+                            );
+                            
+                            // Create order on Shipmozo
+                            $response = $shippingService->createOrder($order);
+                            
+                            if ($response && isset($response['order_id'])) {
+                                $shipment->update([
+                                    'tracking_number' => $response['order_id'],
+                                    'status' => 'created',
+                                    'tracking_history' => json_encode([$response]),
+                                ]);
+                            }
+                        }
+
+                        session()->flash('shipment_info', 'Shipment created successfully on ' . $provider->display_name);
+                    } else {
+                        session()->flash('shipment_warning', 'Shipping provider not configured for this organization.');
+                    }
+                } catch (\Exception $e) {
+                    session()->flash('shipment_error', 'Failed to create shipment: ' . $e->getMessage());
+                }
+            }
+ */
             DB::commit();
 
             session()->flash('success', 'Order created successfully! Order #: ' . $order->order_number);

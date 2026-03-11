@@ -101,6 +101,10 @@ class Organization extends Model
             'role_id' => $roleId,
         ]);
     }
+    public function secrets()
+    {
+        return $this->hasMany(OrganizationSecret::class);
+    }
 
     public function getFullAddressAttribute(): string
     {

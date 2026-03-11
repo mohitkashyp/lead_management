@@ -2,14 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Dashboard;
+use App\Livewire\FollowupsDashboard;
 use App\Livewire\LeadsList;
 use App\Livewire\LeadCreate;
 use App\Livewire\LeadEdit;
 use App\Livewire\LeadShow;
 use App\Livewire\OrdersList;
 use App\Livewire\OrderCreate;
+use App\Livewire\OrganizationEdit;
 use App\Livewire\OrganizationUsers;
 use App\Livewire\RepurchaseList;
+use App\Livewire\RepurchaseManagement;
+use App\Livewire\UserEdit;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,8 +53,22 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', function () {
             return view('organizations.create');
         })->name('create');
+
     });
-    Route::get('/organization/users', OrganizationUsers::class)->name('organization.users');
+    Route::get('/organization/settings', \App\Livewire\OrganizationSettings::class)
+        ->name('organization.settings');
+    Route::get('/organization/edit', OrganizationEdit::class)->name('organization.edit');
+
+
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/create', UserEdit::class)->name('create');
+        Route::get('/{user}/edit', UserEdit::class)->name('edit');
+        Route::get('/', OrganizationUsers::class)->name('list');
+    });
+
+
+    Route::get('/repurchase', RepurchaseManagement::class)->name('repurchase.index');
+    Route::get('/followups', FollowupsDashboard::class)->name('followups.dashboard');
     Route::get('/profile', function () {
         return view('profile.edit');
     })->name('profile.edit');

@@ -41,6 +41,9 @@
                                 <a href="{{ route('leads.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('leads.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }} text-sm font-medium transition-colors">
                                     Leads
                                 </a>
+                                <a href="{{ route('orders.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('orders.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }} text-sm font-medium transition-colors">
+                                    Orders
+                                </a>
                             </div>
                         </div>
 
@@ -85,6 +88,11 @@
                                                 Logout
                                             </button>
                                         </form>
+                                        @endif
+                                        @if(auth()->user()->isAdmin())
+                                        <a href="{{ route('organization.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Organization Setting
+                                        </a>
                                         @endif
                                     </div>
                                 </div>
