@@ -6,6 +6,8 @@ use Livewire\Component;
 use App\Models\Organization;
 use App\Models\ShippingProvider;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class OrganizationEdit extends Component
 {
@@ -42,21 +44,26 @@ class OrganizationEdit extends Component
 
     public function mount($organization = null)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized');
-        }
-
         if ($organization) {
             $this->organization = Organization::findOrFail($organization);
+            
+            // Check if user has permission to edit
+            if (!Auth::user()->isAdmin() && !$this->organization->users()->where('users.id', Auth::id())->exists()) {
+                abort(403, 'Unauthorized');
+            }
+            
             $this->fillFromOrganization();
         } else {
-            $this->organization = Auth::user()->currentOrganization;
-            $this->fillFromOrganization();
+            // Creating new organization - user will become admin
+            $this->organization = new Organization();
+            $this->country = 'India';
+            $this->is_active = true;
         }
 
         $this->loadShippingProviders();
-        $this->loadOrganizationShippingConfig();
+        if ($this->organization->exists) {
+            $this->loadOrganizationShippingConfig();
+        }
     }
 
     public function fillFromOrganization()
@@ -118,9 +125,14 @@ class OrganizationEdit extends Component
         $this->validate();
 
         try {
-            // Update basic organization info
-            $this->organization->update([
+            DB::beginTransaction();
+
+            $isCreating = !$this->organization->exists;
+
+            // Update or create basic organization info
+            $this->organization->fill([
                 'name' => $this->name,
+                'slug' => $this->slug ?: Str::slug($this->name),
                 'email' => $this->email,
                 'phone' => $this->phone,
                 'address' => $this->address,
@@ -131,6 +143,27 @@ class OrganizationEdit extends Component
                 'gstin' => $this->gstin,
                 'is_active' => $this->is_active,
             ]);
+            
+            $this->organization->save();
+
+            // If creating, add user as admin
+            if ($isCreating) {
+                $adminRole = \App\Models\Role::where('name', 'admin')->first();
+                
+                $this->organization->users()->attach(Auth::id(), [
+                    'role_id' => $adminRole->id,
+                    'is_default' => false,
+                    'is_active' => true,
+                ]);
+
+                // Set as current organization if user has none
+                $user = Auth::user();
+                if (!$user->current_organization_id) {
+                    $user->update([
+                        'current_organization_id' => $this->organization->id,
+                    ]);
+                }
+            }
 
             // Build shipping configuration
             $shippingConfig = [];
@@ -169,12 +202,15 @@ class OrganizationEdit extends Component
                 'settings' => $currentSettings,
             ]);
 
-            session()->flash('success', 'Organization updated successfully!');
+            DB::commit();
+
+            session()->flash('success', $isCreating ? 'Organization created successfully!' : 'Organization updated successfully!');
             
-            return redirect()->route('organization.edit', $this->organization->id);
+            return redirect()->route('organizations.index');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to update organization: ' . $e->getMessage());
+            DB::rollBack();
+            session()->flash('error', 'Failed to save organization: ' . $e->getMessage());
         }
     }
 

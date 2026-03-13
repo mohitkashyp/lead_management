@@ -166,5 +166,6 @@
         </div>
 
         @livewireScripts
+
     </body>
 </html>

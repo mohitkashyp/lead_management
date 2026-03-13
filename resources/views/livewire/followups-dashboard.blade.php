@@ -182,7 +182,7 @@
                                             Complete
                                         </button>
                                         <div class="relative" x-data="{ open: false }">
-                                            <button @click="open = !open" class="flex-1 inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                            <button @click="open = !open" type="button" class="flex-1 inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
                                                 <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
@@ -190,9 +190,9 @@
                                             </button>
                                             <div x-show="open" @click.away="open = false" class="absolute right-0 mt-1 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" style="display: none;">
                                                 <div class="py-1">
-                                                    <button wire:click="snooze({{ $lead->id }}, 1)" @click="open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">1 day</button>
-                                                    <button wire:click="snooze({{ $lead->id }}, 3)" @click="open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">3 days</button>
-                                                    <button wire:click="snooze({{ $lead->id }}, 7)" @click="open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">7 days</button>
+                                                    <button wire:click="snooze({{ $lead->id }}, 1)" @click="open = false" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">1 day</button>
+                                                    <button wire:click="snooze({{ $lead->id }}, 3)" @click="open = false" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">3 days</button>
+                                                    <button wire:click="snooze({{ $lead->id }}, 7)" @click="open = false" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">7 days</button>
                                                 </div>
                                             </div>
                                         </div>
