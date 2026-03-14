@@ -122,9 +122,6 @@ class LeadsList extends Component
             ->when($this->filterAssignedTo, function ($query) {
                 $query->where('assigned_to', $this->filterAssignedTo);
             })
-            ->when(!$user->isAdmin(), function ($query) use ($user) {
-                $query->assignedToMe($user->id);
-            })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(15);
 

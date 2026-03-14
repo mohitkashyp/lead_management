@@ -86,6 +86,9 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th scope="col" class="relative px-6 py-3">
+                                    <span class="sr-only">Actions</span>
+                                </th>
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                     wire:click="sortBy('lead_number')">
@@ -150,16 +153,42 @@
                                         @endif
                                     </div>
                                 </th>
-                                <th scope="col" class="relative px-6 py-3">
-                                    <span class="sr-only">Actions</span>
-                                </th>
+                                
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($leads as $lead)
                                 <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex items-center gap-2">
+
+                                            <button wire:click="openFollowup({{ $lead->id }})"
+                                                class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                Follow Up
+                                            </button>
+
+                                            <a href="{{ route('leads.show', $lead->id) }}"
+                                                class="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                                                View
+                                            </a>
+
+                                            {{-- <a href="{{ route('leads.edit', $lead->id) }}"
+                                                class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+                                                Edit
+                                            </a> --}}
+                                            @if(auth()->user()->isAdmin())
+                                            <button wire:click="deleteLead({{ $lead->id }})"
+                                                wire:confirm="Are you sure you want to delete this lead?"
+                                                class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
+                                                Delete
+                                            </button>
+                                                
+                                            @endif
+
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $lead->lead_number }}</div>
+                                        <div class="text-sm font-medium text-blue-900 underline"> <a href="{{ route('leads.edit', $lead->id) }}">{{ $lead->lead_number }}</a></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">{{ $lead->name }}</div>
@@ -197,32 +226,7 @@
                                             <span class="text-gray-400">-</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex items-center gap-2">
-
-                                            <button wire:click="openFollowup({{ $lead->id }})"
-                                                class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
-                                                Follow Up
-                                            </button>
-
-                                            <a href="{{ route('leads.show', $lead->id) }}"
-                                                class="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                                View
-                                            </a>
-
-                                            <a href="{{ route('leads.edit', $lead->id) }}"
-                                                class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-                                                Edit
-                                            </a>
-
-                                            <button wire:click="deleteLead({{ $lead->id }})"
-                                                wire:confirm="Are you sure you want to delete this lead?"
-                                                class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
-                                                Delete
-                                            </button>
-
-                                        </div>
-                                    </td>
+                                    
                                 </tr>
                             @empty
                                 <tr>

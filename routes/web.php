@@ -16,6 +16,7 @@ use App\Livewire\RepurchaseList;
 use App\Livewire\RepurchaseManagement;
 use App\Livewire\UserEdit;
 use App\Livewire\UserProfile;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,8 +48,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create/{lead?}', OrderCreate::class)->name('create');
     });
 
-    // Repurchase Reminders
-    Route::get('/repurchase-reminders', RepurchaseList::class)->name('repurchase.index');
+
 
     // Organization Management (optional - for creating new orgs)
     Route::prefix('organizations')->name('organizations.')->group(function () {
@@ -77,9 +77,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/organizations/create', App\Livewire\OrganizationCreate::class)
         ->name('organizations.create');
 
-    Route::get('/organization/settings', \App\Livewire\OrganizationSettings::class)
+    /* Route::get('/organization/settings', \App\Livewire\OrganizationSettings::class)
         ->name('organization.settings');
-    Route::get('/organization/edit', OrganizationEdit::class)->name('organization.edit');
+    Route::get('/organization/edit', OrganizationEdit::class)->name('organization.edit'); */
 
 
 
@@ -94,5 +94,10 @@ Route::middleware(['auth'])->group(function () {
 
 
 });
-
+Route::post('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect('/');
+})->name('logout');
 require __DIR__ . '/auth.php';
