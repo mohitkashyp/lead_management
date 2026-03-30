@@ -340,7 +340,7 @@
                                                 <div class="mt-2 text-sm text-yellow-700">
                                                     <p>Please configure shipping providers in organization settings to enable automatic shipment creation.</p>
                                                     @if(auth()->user()->isAdmin())
-                                                        <a href="{{ route('organization.edit') }}" class="font-medium underline text-yellow-700 hover:text-yellow-600 mt-2 inline-block">
+                                                        <a href="{{ route('organizations.edit', $organization) }}" class="font-medium underline text-yellow-700 hover:text-yellow-600 mt-2 inline-block">
                                                             Configure Shipping Providers
                                                         </a>
                                                     @endif

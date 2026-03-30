@@ -4,9 +4,44 @@
             <!-- Page Header -->
             <div class="mb-6">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900">{{ $lead->name }}</h1>
-                        <p class="mt-1 text-sm text-gray-600">Lead #{{ $lead->lead_number }}</p>
+                    <div class="flex items-center gap-4">
+                        <!-- Previous/Next Navigation -->
+                        <div class="flex items-center gap-2">
+                            @if($previousLeadId)
+                                <a href="{{ route('leads.show', $previousLeadId) }}" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" title="Previous Lead">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </a>
+                            @else
+                                <button disabled class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed" title="No Previous Lead">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                            @endif
+
+                            @if($nextLeadId)
+                                <a href="{{ route('leads.show', $nextLeadId) }}" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" title="Next Lead">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            @else
+                                <button disabled class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed" title="No Next Lead">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            @endif
+                        </div>
+
+                        <div class="border-l border-gray-300 h-8"></div>
+
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">{{ $lead->name }}</h1>
+                            <p class="mt-1 text-sm text-gray-600">Lead #{{ $lead->lead_number }}</p>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3">
                         <a href="{{ route('leads.edit', $lead->id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">

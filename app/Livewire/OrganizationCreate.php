@@ -21,6 +21,7 @@ class OrganizationCreate extends Component
     public $pincode;
     public $country = 'India';
     public $gstin;
+    public $organization;
     public $is_active = true;
     
     // Creator becomes admin
@@ -76,7 +77,7 @@ class OrganizationCreate extends Component
 
             // Add creator as admin of this organization
             $user = Auth::user();
-            
+            $this->organization=$organization;
             $organization->users()->attach($user->id, [
                 'role_id' => $adminRole->id,
                 'is_default' => false,
@@ -104,6 +105,6 @@ class OrganizationCreate extends Component
 
     public function render()
     {
-        return view('livewire.organization-create')->layout('layouts.app');
+        return view('livewire.organization-create',['organization'=>$this->organization])->layout('layouts.app');
     }
 }

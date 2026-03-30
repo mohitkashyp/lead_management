@@ -12,7 +12,7 @@ class LeadShow extends Component
 {
     public $lead;
     public $activities;
-    
+
     // Activity form
     public $showActivityForm = false;
     public $activity_type = 'call';
@@ -20,7 +20,9 @@ class LeadShow extends Component
     public $description;
     public $activity_date;
     public $next_follow_up_date;
-    
+    public $previousLeadId;
+    public $nextLeadId;
+
     // Quick status update
     public $new_status_id;
 
@@ -35,9 +37,11 @@ class LeadShow extends Component
     public function mount($lead)
     {
         $this->lead = Lead::with(['source', 'status', 'assignedTo', 'customer'])
-            ->findOrFail($lead);
         
+            ->findOrFail($lead);
+
         $this->loadActivities();
+        $this->loadNavigation();
         $this->activity_date = now()->format('Y-m-d\TH:i');
         $this->new_status_id = $this->lead->lead_status_id;
     }
@@ -49,11 +53,34 @@ class LeadShow extends Component
             ->orderBy('activity_date', 'desc')
             ->get();
     }
+    public function loadNavigation()
+    {
+        $user = Auth::user();
+        
+        // Get base query with same filters as list
+        $baseQuery = Lead::where('organization_id', $user->currentOrganization->id);
 
+        // Apply same filtering logic as index page
+        if (!$user->canManageAllLeads()) {
+            $baseQuery = $baseQuery->where('assigned_to', $user->id);
+        }
+
+        // Get previous lead (ID less than current, ordered desc)
+        $this->previousLeadId = (clone $baseQuery)
+            ->where('id', '<', $this->lead->id)
+            ->orderBy('id', 'desc')
+            ->value('id');
+
+        // Get next lead (ID greater than current, ordered asc)
+        $this->nextLeadId = (clone $baseQuery)
+            ->where('id', '>', $this->lead->id)
+            ->orderBy('id', 'asc')
+            ->value('id');
+    }
     public function toggleActivityForm()
     {
         $this->showActivityForm = !$this->showActivityForm;
-        
+
         if ($this->showActivityForm) {
             $this->reset(['activity_type', 'subject', 'description', 'next_follow_up_date']);
             $this->activity_date = now()->format('Y-m-d\TH:i');
@@ -83,7 +110,7 @@ class LeadShow extends Component
         }
 
         session()->flash('success', 'Activity added successfully!');
-        
+
         $this->loadActivities();
         $this->toggleActivityForm();
         $this->lead->refresh();
@@ -147,13 +174,13 @@ class LeadShow extends Component
 
     public function convertToCustomer()
     {
-        
-        
+
+
         try {
             $customer = $this->lead->convertToCustomer();
             session()->flash('success', 'Lead converted to customer successfully!');
             $this->lead->refresh();
-            
+
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to convert lead: ' . $e->getMessage());
         }
@@ -162,7 +189,7 @@ class LeadShow extends Component
     public function render()
     {
         $statuses = LeadStatus::active()->get();
-        
+
         return view('livewire.lead-show', [
             'statuses' => $statuses,
         ])->layout('layouts.app');
