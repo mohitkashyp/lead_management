@@ -37,6 +37,7 @@ class OrderCreate extends Component
     public $available_shipping_providers = [];
     public $selected_shipping_provider_id;
     public $create_shipment = false;
+    public $organization = false;
     public $shipping_provider_selected = null;
     
     // Order items
@@ -63,6 +64,7 @@ class OrderCreate extends Component
 
     public function mount($lead = null)
     {
+       // $this->organization=Auth::user()->current_organization_id;
         $this->products = Product::where('organization_id', Auth::user()->current_organization_id)
             ->where('is_active', true)
             ->get();
