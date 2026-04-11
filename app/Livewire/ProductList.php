@@ -76,7 +76,7 @@ class ProductList extends Component
 
     public function openEditModal($productId)
     {
-        $product = Product::forOrganization(Auth::user()->organization_id)
+        $product = Product::forOrganization(Auth::user()->currentOrganization->id)
             ->findOrFail($productId);
 
         $this->editingProduct = $product->id;
@@ -136,7 +136,7 @@ class ProductList extends Component
         ];
 
         if ($this->editingProduct) {
-            $product = Product::forOrganization(Auth::user()->organization_id)
+            $product = Product::forOrganization(Auth::user()->currentOrganization->id)
                 ->findOrFail($this->editingProduct);
             $product->update($data);
             session()->flash('message', 'Product updated successfully.');
@@ -151,7 +151,7 @@ class ProductList extends Component
 
     public function deleteProduct($productId)
     {
-        $product = Product::forOrganization(Auth::user()->organization_id)
+        $product = Product::forOrganization(Auth::user()->currentOrganization->id)
             ->findOrFail($productId);
         $product->delete();
         session()->flash('message', 'Product deleted successfully.');
@@ -159,7 +159,7 @@ class ProductList extends Component
 
     public function toggleStatus($productId)
     {
-        $product = Product::forOrganization(Auth::user()->organization_id)
+        $product = Product::forOrganization(Auth::user()->currentOrganization->id)
             ->findOrFail($productId);
         $product->is_active = !$product->is_active;
         $product->save();
@@ -170,7 +170,7 @@ class ProductList extends Component
 
     public function render()
     {
-        $products = Product::forOrganization(Auth::user()->organization_id)
+        $products = Product::forOrganization(Auth::user()->currentOrganization->id)
             ->with('category')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
