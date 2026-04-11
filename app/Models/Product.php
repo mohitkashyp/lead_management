@@ -14,24 +14,24 @@ class Product extends Model
         'name',
         'description',
         'price',
-        'cost_price',
+        'cost',
         'stock_quantity',
-        'low_stock_threshold',
         'weight',
         'length',
         'width',
         'height',
+        'image',
         'is_active',
-        'tax_rate',
-        'tax_type',
-        'hsn_code',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'cost_price' => 'decimal:2',
+        'cost' => 'decimal:2',
         'weight' => 'decimal:2',
-        'tax_rate' => 'decimal:2',
+        'length' => 'decimal:2',
+        'width' => 'decimal:2',
+        'height' => 'decimal:2',
+        'stock_quantity' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -43,7 +43,7 @@ class Product extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(ProductCategory::class, 'category_id');
+        return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
 
     // Scopes
@@ -57,13 +57,8 @@ class Product extends Model
         return $query->where('is_active', true);
     }
 
-    public function scopeLowStock($query)
-    {
-        return $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
-    }
-
     // Stock Management
-    public function decreaseStock($quantity)
+    public function decreaseStock(int $quantity): bool
     {
         if ($this->stock_quantity >= $quantity) {
             $this->stock_quantity -= $quantity;
@@ -73,119 +68,82 @@ class Product extends Model
         return false;
     }
 
-    public function increaseStock($quantity)
+    public function increaseStock(int $quantity): void
     {
         $this->stock_quantity += $quantity;
         $this->save();
     }
 
-    public function isLowStock()
-    {
-        return $this->stock_quantity <= $this->low_stock_threshold;
-    }
-
-    public function isOutOfStock()
+    public function isOutOfStock(): bool
     {
         return $this->stock_quantity <= 0;
     }
 
-    // Tax Calculations
-    public function getTaxRate()
-    {
-        return $this->tax_rate ?? 18; // Default 18% GST
-    }
-
-    public function getTaxType()
-    {
-        return $this->tax_type ?? 'gst'; // gst, cgst_sgst, igst
-    }
-
-    public function calculateTax($amount)
-    {
-        $taxRate = $this->getTaxRate();
-        return ($amount * $taxRate) / 100;
-    }
-
-    public function getPriceWithTax()
-    {
-        return $this->price + $this->calculateTax($this->price);
-    }
-
-    public function getTaxBreakdown($amount)
-    {
-        $taxType = $this->getTaxType();
-        $taxRate = $this->getTaxRate();
-        $totalTax = ($amount * $taxRate) / 100;
-
-        if ($taxType === 'cgst_sgst') {
-            // Split equally between CGST and SGST
-            return [
-                'type' => 'cgst_sgst',
-                'cgst_rate' => $taxRate / 2,
-                'sgst_rate' => $taxRate / 2,
-                'cgst_amount' => $totalTax / 2,
-                'sgst_amount' => $totalTax / 2,
-                'total_tax' => $totalTax,
-            ];
-        } elseif ($taxType === 'igst') {
-            // Interstate GST
-            return [
-                'type' => 'igst',
-                'igst_rate' => $taxRate,
-                'igst_amount' => $totalTax,
-                'total_tax' => $totalTax,
-            ];
-        } else {
-            // Default GST
-            return [
-                'type' => 'gst',
-                'gst_rate' => $taxRate,
-                'gst_amount' => $totalTax,
-                'total_tax' => $totalTax,
-            ];
-        }
-    }
-
     // Display Helpers
-    public function getFormattedPrice()
+    public function getFormattedPrice(): string
     {
         return '₹' . number_format($this->price, 2);
     }
 
-    public function getFormattedPriceWithTax()
+    public function getFormattedCost(): ?string
     {
-        return '₹' . number_format($this->getPriceWithTax(), 2);
+        if ($this->cost) {
+            return '₹' . number_format($this->cost, 2);
+        }
+        return null;
     }
 
-    public function getStockStatus()
+    public function getProfitMargin(): ?float
+    {
+        if ($this->cost && $this->cost > 0) {
+            return (($this->price - $this->cost) / $this->cost) * 100;
+        }
+        return null;
+    }
+
+    public function getFormattedProfitMargin(): ?string
+    {
+        $margin = $this->getProfitMargin();
+        if ($margin !== null) {
+            return number_format($margin, 2) . '%';
+        }
+        return null;
+    }
+
+    public function getStockStatus(): string
     {
         if ($this->isOutOfStock()) {
             return 'out_of_stock';
-        } elseif ($this->isLowStock()) {
+        } elseif ($this->stock_quantity <= 5) { // You can make this configurable
             return 'low_stock';
         }
         return 'in_stock';
     }
 
-    public function getStockStatusLabel()
+    public function getStockStatusLabel(): string
     {
-        $status = $this->getStockStatus();
-        
-        return match($status) {
+        return match($this->getStockStatus()) {
             'out_of_stock' => 'Out of Stock',
             'low_stock' => 'Low Stock',
             'in_stock' => 'In Stock',
         };
     }
 
-    public function getStockStatusColor()
+    public function getStockStatusColor(): string
     {
-        $status = $this->getStockStatus();
-        
-        return match($status) {
+        return match($this->getStockStatus()) {
             'out_of_stock' => 'red',
             'low_stock' => 'yellow',
             'in_stock' => 'green',
         };
+    }
+
+    // Dimensions helper
+    public function getDimensions(): ?string
+    {
+        if ($this->length && $this->width && $this->height) {
+            return sprintf('%s x %s x %s cm', $this->length, $this->width, $this->height);
+        }
+        return null;
     }
 }

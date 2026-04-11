@@ -16,23 +16,20 @@ class ProductList extends Component
     public $showModal = false;
     public $editingProduct = null; // null = create mode, product id = edit mode
 
-    // Form fields (same as ProductForm)
+    // Form fields (matching migration)
     public $category_id = '';
     public $sku = '';
     public $name = '';
     public $description = '';
     public $price = '';
-    public $cost_price = '';
+    public $cost = ''; // Changed from cost_price to cost
     public $stock_quantity = '';
-    public $low_stock_threshold = '';
     public $weight = '';
     public $length = '';
     public $width = '';
     public $height = '';
+    public $image = ''; // Added image field
     public $is_active = true;
-    public $tax_rate = '';
-    public $tax_type = 'gst';
-    public $hsn_code = '';
 
     // Categories for dropdown
     public $categories = [];
@@ -50,23 +47,26 @@ class ProductList extends Component
 
         return [
             'category_id' => 'nullable|exists:product_categories,id',
-            'sku' => "required|string|max:50|{$skuUnique}",
+            'sku' => "required|string|max:255|{$skuUnique}", // Changed to match migration (string without length limit)
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
+            'price' => 'required|numeric|min:0|max:99999999.99',
+            'cost' => 'nullable|numeric|min:0|max:99999999.99', // Changed from cost_price
             'stock_quantity' => 'required|integer|min:0',
-            'low_stock_threshold' => 'required|integer|min:0',
-            'weight' => 'nullable|numeric|min:0',
-            'length' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
+            'weight' => 'nullable|numeric|min:0|max:999999.99',
+            'length' => 'nullable|numeric|min:0|max:999999.99',
+            'width' => 'nullable|numeric|min:0|max:999999.99',
+            'height' => 'nullable|numeric|min:0|max:999999.99',
+            'image' => 'nullable|string|max:255', // Added validation for image
             'is_active' => 'boolean',
-            'tax_rate' => 'nullable|numeric|min:0|max:100',
-            'tax_type' => 'required|in:gst,cgst_sgst,igst',
-            'hsn_code' => 'nullable|string|max:20',
         ];
     }
+
+    protected $messages = [
+        'sku.unique' => 'This SKU already exists for your organization.',
+        'price.min' => 'Price must be at least 0.',
+        'stock_quantity.min' => 'Stock quantity cannot be negative.',
+    ];
 
     public function mount()
     {
@@ -86,10 +86,20 @@ class ProductList extends Component
             ->findOrFail($productId);
 
         $this->editingProduct = $product->id;
-        $this->fill($product->toArray());
+        $this->category_id = $product->product_category_id;
+        $this->sku = $product->sku;
+        $this->name = $product->name;
+        $this->description = $product->description;
         $this->price = (string) $product->price;
-        $this->cost_price = (string) $product->cost_price;
-        $this->tax_rate = (string) $product->tax_rate;
+        $this->cost = $product->cost ? (string) $product->cost : '';
+        $this->stock_quantity = (string) $product->stock_quantity;
+        $this->weight = $product->weight ? (string) $product->weight : '';
+        $this->length = $product->length ? (string) $product->length : '';
+        $this->width = $product->width ? (string) $product->width : '';
+        $this->height = $product->height ? (string) $product->height : '';
+        $this->image = $product->image ?? '';
+        $this->is_active = $product->is_active;
+        
         $this->showModal = true;
     }
 
@@ -104,12 +114,10 @@ class ProductList extends Component
     {
         $this->reset([
             'category_id', 'sku', 'name', 'description', 'price',
-            'cost_price', 'stock_quantity', 'low_stock_threshold',
-            'weight', 'length', 'width', 'height', 'is_active',
-            'tax_rate', 'tax_type', 'hsn_code', 'editingProduct'
+            'cost', 'stock_quantity', 'weight', 'length', 'width', 
+            'height', 'image', 'is_active', 'editingProduct'
         ]);
         $this->is_active = true;
-        $this->tax_type = 'gst';
     }
 
     public function save()
@@ -118,22 +126,19 @@ class ProductList extends Component
 
         $data = [
             'organization_id' => Auth::user()->organization_id,
-            'category_id' => $this->category_id ?: null,
+            'product_category_id' => $this->category_id ?: null,
             'sku' => $this->sku,
             'name' => $this->name,
-            'description' => $this->description,
+            'description' => $this->description ?: null,
             'price' => $this->price,
-            'cost_price' => $this->cost_price ?: null,
+            'cost' => $this->cost ?: null,
             'stock_quantity' => $this->stock_quantity,
-            'low_stock_threshold' => $this->low_stock_threshold,
             'weight' => $this->weight ?: null,
             'length' => $this->length ?: null,
             'width' => $this->width ?: null,
             'height' => $this->height ?: null,
+            'image' => $this->image ?: null,
             'is_active' => $this->is_active,
-            'tax_rate' => $this->tax_rate ?: null,
-            'tax_type' => $this->tax_type,
-            'hsn_code' => $this->hsn_code ?: null,
         ];
 
         if ($this->editingProduct) {
@@ -147,15 +152,33 @@ class ProductList extends Component
         }
 
         $this->closeModal();
-        $this->dispatch('product-saved'); // optional event
+        $this->dispatch('product-saved');
     }
 
     public function deleteProduct($productId)
     {
         $product = Product::forOrganization(Auth::user()->organization_id)
             ->findOrFail($productId);
+        
+        // Optional: Check if product can be deleted (e.g., no related orders)
+        // if ($product->orders()->exists()) {
+        //     session()->flash('error', 'Cannot delete product with existing orders.');
+        //     return;
+        // }
+        
         $product->delete();
         session()->flash('message', 'Product deleted successfully.');
+    }
+
+    public function toggleStatus($productId)
+    {
+        $product = Product::forOrganization(Auth::user()->organization_id)
+            ->findOrFail($productId);
+        $product->is_active = !$product->is_active;
+        $product->save();
+        
+        $status = $product->is_active ? 'activated' : 'deactivated';
+        session()->flash('message', "Product {$status} successfully.");
     }
 
     public function render()
@@ -165,10 +188,11 @@ class ProductList extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('sku', 'like', '%' . $this->search . '%');
+                      ->orWhere('sku', 'like', '%' . $this->search . '%')
+                      ->orWhere('description', 'like', '%' . $this->search . '%');
                 });
             })
-            ->orderBy('id', 'desc')
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         return view('livewire.product-list', [
