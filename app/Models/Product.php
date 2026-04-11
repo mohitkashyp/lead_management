@@ -94,18 +94,12 @@ class Product extends Model
      * Get tax rate for product
      * Note: This requires 'tax_rate' column in products table
      * To add: php artisan make:migration add_tax_fields_to_products_table
-     * 
-     * Schema::table('products', function (Blueprint $table) {
-     *     $table->decimal('tax_rate', 5, 2)->default(0)->after('price');
-     *     $table->enum('tax_type', ['gst', 'cgst_sgst', 'igst'])->default('gst')->after('tax_rate');
-     *     $table->string('hsn_code', 20)->nullable()->after('tax_type');
-     * });
      */
     public function getTaxRate(): float
     {
-        // Check if tax_rate column exists and has value
-        if ($this->hasAttribute('tax_rate') && $this->tax_rate !== null) {
-            return (float) $this->tax_rate;
+        // Check if tax_rate column exists in the table
+        if ($this->hasColumn('tax_rate') && $this->getAttribute('tax_rate') !== null) {
+            return (float) $this->getAttribute('tax_rate');
         }
         
         // Default 18% GST if tax_rate column doesn't exist or is null
@@ -118,9 +112,9 @@ class Product extends Model
      */
     public function getTaxType(): string
     {
-        // Check if tax_type column exists and has value
-        if ($this->hasAttribute('tax_type') && $this->tax_type !== null) {
-            return $this->tax_type;
+        // Check if tax_type column exists in the table
+        if ($this->hasColumn('tax_type') && $this->getAttribute('tax_type') !== null) {
+            return $this->getAttribute('tax_type');
         }
         
         // Default 'gst' if tax_type column doesn't exist
@@ -133,9 +127,9 @@ class Product extends Model
      */
     public function getHsnCode(): ?string
     {
-        // Check if hsn_code column exists
-        if ($this->hasAttribute('hsn_code')) {
-            return $this->hsn_code;
+        // Check if hsn_code column exists in the table
+        if ($this->hasColumn('hsn_code')) {
+            return $this->getAttribute('hsn_code');
         }
         
         return null;
@@ -210,7 +204,9 @@ class Product extends Model
      */
     public function hasTaxConfig(): bool
     {
-        return $this->hasAttribute('tax_rate') && $this->tax_rate !== null && $this->tax_rate > 0;
+        return $this->hasColumn('tax_rate') && 
+               $this->getAttribute('tax_rate') !== null && 
+               $this->getAttribute('tax_rate') > 0;
     }
 
     // Display Helpers
@@ -299,9 +295,20 @@ class Product extends Model
         return 'N/A';
     }
 
-    // Helper to check if attribute exists (for dynamic columns)
-    protected function hasAttribute(string $attribute): bool
+    /**
+     * Check if a column exists in the product's table
+     * This is a public helper method to check for column existence
+     */
+    public function hasColumn(string $column): bool
     {
-        return array_key_exists($attribute, $this->getAttributes());
+        static $schemaColumns = [];
+        
+        $table = $this->getTable();
+        
+        if (!isset($schemaColumns[$table])) {
+            $schemaColumns[$table] = \Illuminate\Support\Facades\Schema::getColumnListing($table);
+        }
+        
+        return in_array($column, $schemaColumns[$table]);
     }
 }
