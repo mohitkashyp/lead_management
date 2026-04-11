@@ -9,6 +9,8 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\OrderItem;
 use App\Models\ShippingProvider;
+use App\Services\ShipmozoService;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -326,7 +328,7 @@ class OrderCreate extends Component
             }
 
             // Create shipment if requested
-          /*   if ($this->create_shipment && $this->selected_shipping_provider_id) {
+             if ($this->create_shipment && $this->selected_shipping_provider_id) {
                 try {
                     $provider = ShippingProvider::find($this->selected_shipping_provider_id);
                     
@@ -363,20 +365,79 @@ class OrderCreate extends Component
                                 ]);
                             }
                         } elseif (strtolower($provider->name) === 'shipmozo') {
-                            $shippingService = new \App\Services\ShipmozoService(
-                                $providerConfig['api_key'],
-                                $providerConfig['api_endpoint'] ?? $provider->api_endpoint
-                            );
-                            
-                            // Create order on Shipmozo
-                            $response = $shippingService->createOrder($order);
-                            
-                            if ($response && isset($response['order_id'])) {
+                            try {
+                                // Initialize the service
+                                $shippingService = new ShipmozoService();
+                                
+                                // Configure if needed (override config values)
+                                if (!empty($providerConfig['public_key'])) {
+                                    $shippingService->setPublicKey($providerConfig['public_key']);
+                                }
+                                if (!empty($providerConfig['private_key'])) {
+                                    $shippingService->setPrivateKey($providerConfig['private_key']);
+                                }
+                                if (!empty($providerConfig['api_endpoint'])) {
+                                    $shippingService->setBaseUrl($providerConfig['api_endpoint']);
+                                }
+                                
+                                // First, check if API is working
+                                $status = $shippingService->checkApiStatus();
+                                
+                                // Get warehouse ID (you might need to fetch or create one)
+                                $warehouses = $shippingService->getWarehouses();
+                                $warehouseId = null;
+                                
+                                if (!empty($warehouses)) {
+                                    // Use first active warehouse or default
+                                    foreach ($warehouses as $warehouse) {
+                                        if ($warehouse['status'] === 'ACTIVE') {
+                                            $warehouseId = $warehouse['id'];
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (!$warehouseId) {
+                                    // Create a warehouse if none exists
+                                    $warehouseId = $shippingService->createWarehouse([
+                                        'address_title' => 'Default Warehouse',
+                                        'name' => $order->customer->name ?? 'Default',
+                                        'phone' => $order->customer->phone ?? '9999999999',
+                                        'email' => $order->customer->email ?? 'default@example.com',
+                                        'address_line_one' => $order->shipping_address_line_one ?? 'Default Address',
+                                        'pin_code' => $order->shipping_pincode ?? '110001',
+                                    ]);
+                                }
+                                
+                                // Push order to Shipmozo
+                                $response = $shippingService->pushOrder($order, $warehouseId);
+                                
+                                // Check response and update shipment
+                                if ($response && isset($response['result']) && $response['result'] === '1') {
+                                    $orderData = $response['data'];
+                                    
+                                    $shipment->update([
+                                        'tracking_number' => $orderData['order_id'] ?? $orderData['reference_id'],
+                                        'reference_id' => $orderData['reference_id'] ?? null,
+                                        'status' => 'created',
+                                        'tracking_history' => json_encode([$response]),
+                                        'shipmozo_response' => json_encode($response),
+                                    ]);
+                                    
+                                   
+                                    
+                                } else {
+                                    throw new Exception($response['message'] ?? 'Unknown error occurred');
+                                }
+                                
+                            } catch (Exception $e) {
+                                
                                 $shipment->update([
-                                    'tracking_number' => $response['order_id'],
-                                    'status' => 'created',
-                                    'tracking_history' => json_encode([$response]),
+                                    'status' => 'failed',
+                                    'error_message' => $e->getMessage(),
                                 ]);
+                                
+                                throw $e;
                             }
                         }
 
@@ -388,7 +449,7 @@ class OrderCreate extends Component
                     session()->flash('shipment_error', 'Failed to create shipment: ' . $e->getMessage());
                 }
             }
- */
+ 
             DB::commit();
 
             session()->flash('success', 'Order created successfully! Order #: ' . $order->order_number);
