@@ -12,6 +12,8 @@ use App\Livewire\OrderCreate;
 use App\Livewire\OrganizationEdit;
 use App\Livewire\OrganizationsList;
 use App\Livewire\OrganizationUsers;
+use App\Livewire\ProductForm;
+use App\Livewire\ProductList;
 use App\Livewire\RepurchaseList;
 use App\Livewire\RepurchaseManagement;
 use App\Livewire\UserEdit;
@@ -81,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('organization.settings');
     Route::get('/organization/edit', OrganizationEdit::class)->name('organization.edit'); */
 
-
+    Route::get('/products', ProductList::class)->name('products.index');
 
     Route::get('/profile', UserProfile::class)
         ->name('profile');
