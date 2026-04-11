@@ -89,7 +89,7 @@
                                 <th scope="col" class="relative px-6 py-3">
                                     <span class="sr-only">Actions</span>
                                 </th>
-                               
+
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                     wire:click="sortBy('name')">
@@ -138,12 +138,13 @@
                                         @endif
                                     </div>
                                 </th>
-                                
+
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($leads as $lead)
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50 cursor-pointer"
+                                    @click="window.location.href = '{{ route('leads.show', $lead->id) }}'">
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex items-center gap-2">
 
@@ -161,18 +162,17 @@
                                                 class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
                                                 Edit
                                             </a> --}}
-                                            @if(auth()->user()->isAdmin())
-                                            <button wire:click="deleteLead({{ $lead->id }})"
-                                                wire:confirm="Are you sure you want to delete this lead?"
-                                                class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
-                                                Delete
-                                            </button>
-                                                
+                                            @if (auth()->user()->isAdmin())
+                                                <button wire:click="deleteLead({{ $lead->id }})"
+                                                    wire:confirm="Are you sure you want to delete this lead?"
+                                                    class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
+                                                    Delete
+                                                </button>
                                             @endif
 
                                         </div>
                                     </td>
-                                   
+
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">{{ $lead->name }}</div>
                                     </td>
@@ -209,7 +209,7 @@
                                             <span class="text-gray-400">-</span>
                                         @endif
                                     </td>
-                                    
+
                                 </tr>
                             @empty
                                 <tr>
