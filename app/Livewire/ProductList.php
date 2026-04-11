@@ -119,7 +119,7 @@ class ProductList extends Component
         $this->validate();
 
         $data = [
-            'organization_id' => Auth::user()->organization_id,
+            'organization_id' => Auth::user()->currentOrganization->id,
             'product_category_id' => $this->category_id ?: null,
             'sku' => $this->sku,
             'name' => $this->name,
