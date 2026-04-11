@@ -89,22 +89,7 @@
                                 <th scope="col" class="relative px-6 py-3">
                                     <span class="sr-only">Actions</span>
                                 </th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                    wire:click="sortBy('lead_number')">
-                                    <div class="flex items-center">
-                                        Lead #
-                                        @if ($sortField === 'lead_number')
-                                            <svg class="ml-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                @if ($sortDirection === 'asc')
-                                                    <path d="M5 10l5-5 5 5H5z" />
-                                                @else
-                                                    <path d="M5 10l5 5 5-5H5z" />
-                                                @endif
-                                            </svg>
-                                        @endif
-                                    </div>
-                                </th>
+                               
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                     wire:click="sortBy('name')">
@@ -187,9 +172,7 @@
 
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-blue-900 underline"> <a href="{{ route('leads.edit', $lead->id) }}">{{ $lead->lead_number }}</a></div>
-                                    </td>
+                                   
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">{{ $lead->name }}</div>
                                     </td>
