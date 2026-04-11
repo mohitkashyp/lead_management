@@ -28,7 +28,7 @@ class ProductList extends Component
     public $length = '';
     public $width = '';
     public $height = '';
-    public $image = ''; // Added image field
+    public $image = '';
     public $is_active = true;
 
     // Categories for dropdown
@@ -47,26 +47,20 @@ class ProductList extends Component
 
         return [
             'category_id' => 'nullable|exists:product_categories,id',
-            'sku' => "required|string|max:255|{$skuUnique}", // Changed to match migration (string without length limit)
+            'sku' => "required|string|max:255|{$skuUnique}",
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0|max:99999999.99',
-            'cost' => 'nullable|numeric|min:0|max:99999999.99', // Changed from cost_price
+            'price' => 'required|numeric|min:0',
+            'cost' => 'nullable|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
-            'weight' => 'nullable|numeric|min:0|max:999999.99',
-            'length' => 'nullable|numeric|min:0|max:999999.99',
-            'width' => 'nullable|numeric|min:0|max:999999.99',
-            'height' => 'nullable|numeric|min:0|max:999999.99',
-            'image' => 'nullable|string|max:255', // Added validation for image
+            'weight' => 'nullable|numeric|min:0',
+            'length' => 'nullable|numeric|min:0',
+            'width' => 'nullable|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'image' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ];
     }
-
-    protected $messages = [
-        'sku.unique' => 'This SKU already exists for your organization.',
-        'price.min' => 'Price must be at least 0.',
-        'stock_quantity.min' => 'Stock quantity cannot be negative.',
-    ];
 
     public function mount()
     {
@@ -159,13 +153,6 @@ class ProductList extends Component
     {
         $product = Product::forOrganization(Auth::user()->organization_id)
             ->findOrFail($productId);
-        
-        // Optional: Check if product can be deleted (e.g., no related orders)
-        // if ($product->orders()->exists()) {
-        //     session()->flash('error', 'Cannot delete product with existing orders.');
-        //     return;
-        // }
-        
         $product->delete();
         session()->flash('message', 'Product deleted successfully.');
     }
@@ -188,11 +175,10 @@ class ProductList extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('sku', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
+                      ->orWhere('sku', 'like', '%' . $this->search . '%');
                 });
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->paginate(10);
 
         return view('livewire.product-list', [
