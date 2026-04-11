@@ -50,24 +50,58 @@ class ShipmozoService
     /**
      * Authenticate user and get keys
      */
-    public function login($username, $password)
+    public function setPublicKey($publicKey)
     {
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-        ])->post($this->baseUrl . '/login', [
-            'username' => $username,
-            'password' => $password,
-        ]);
+        $this->publicKey = $publicKey;
+        return $this;
+    }
 
-        if ($response->successful()) {
-            $data = $response->json();
-            if ($data['result'] === '1') {
-                return $data['data'][0] ?? null;
+    /**
+     * Set private key
+     */
+    public function setPrivateKey($privateKey)
+    {
+        $this->privateKey = $privateKey;
+        return $this;
+    }
+
+    /**
+     * Set base URL
+     */
+    public function setBaseUrl($baseUrl)
+    {
+        $this->baseUrl = rtrim($baseUrl, '/');
+        return $this;
+    }
+
+    /**
+     * Create and push order (complete workflow)
+     */
+    public function createAndPushOrder(Order $order, $warehouseId = null)
+    {
+        // If warehouse_id not provided, get default warehouse
+        if (!$warehouseId) {
+            $warehouses = $this->getWarehouses();
+            if (!empty($warehouses)) {
+                foreach ($warehouses as $warehouse) {
+                    if ($warehouse['default'] === 'YES') {
+                        $warehouseId = $warehouse['id'];
+                        break;
+                    }
+                }
+                // If no default, use first active warehouse
+                if (!$warehouseId && !empty($warehouses)) {
+                    $warehouseId = $warehouses[0]['id'];
+                }
             }
-            throw new Exception($data['message']);
         }
 
-        throw new Exception('Login failed: ' . $response->body());
+        if (!$warehouseId) {
+            throw new Exception('No warehouse ID provided or found');
+        }
+
+        // Push the order
+        return $this->pushOrder($order, $warehouseId);
     }
 
     /**
@@ -402,7 +436,7 @@ class ShipmozoService
     protected function calculateWeight(Order $order)
     {
         $totalWeight = 0;
-        
+
         foreach ($order->items as $item) {
             $productWeight = $item->product->weight ?? 0.5; // Default 0.5 kg
             $totalWeight += $productWeight * $item->quantity;
