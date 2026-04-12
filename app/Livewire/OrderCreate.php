@@ -411,7 +411,7 @@ class OrderCreate extends Component
                                 
                                 // Push order to Shipmozo
                                 $response = $shippingService->pushOrder($order, $warehouseId);
-                                
+                                dd($response);
                                 // Check response and update shipment
                                 if ($response && isset($response['result']) && $response['result'] === '1') {
                                     $orderData = $response['data'];
