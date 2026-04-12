@@ -51,7 +51,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'shipmozo' => [
-        'api_url' => env('SHIPMOZO_API_URL', 'https://api.shipmozo.com/api/v1'),
+        'api_url' => env('SHIPMOZO_API_URL', 'https://shipping-api.com/api/v1'),
         'api_key' => env('SHIPMOZO_API_KEY'),
         'pickup_name' => env('SHIPMOZO_PICKUP_NAME'),
         'pickup_phone' => env('SHIPMOZO_PICKUP_PHONE'),
