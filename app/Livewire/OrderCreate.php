@@ -386,7 +386,7 @@ class OrderCreate extends Component
                                 // Get warehouse ID (you might need to fetch or create one)
                                 $warehouses = $shippingService->getWarehouses();
                                 $warehouseId = null;
-                                
+                                dd($warehouseId);
                                 if (!empty($warehouses)) {
                                     // Use first active warehouse or default
                                     foreach ($warehouses as $warehouse) {
