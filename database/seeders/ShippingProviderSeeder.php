@@ -19,7 +19,7 @@ class ShippingProviderSeeder extends Seeder
             [
                 'name' => 'shipmozo',
                 'display_name' => 'Shipmozo',
-                'api_endpoint' => 'https://api.shipmozo.com/api/v1',
+                'api_endpoint' => 'https://shipping-api.com/api/v1',
                 'is_active' => true,
             ],
             [
