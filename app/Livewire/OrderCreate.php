@@ -344,7 +344,7 @@ class OrderCreate extends Component
                     $settings = $organization->settings ?? [];
                     $providerKey = strtolower(str_replace(' ', '_', $provider->name));
                     $providerConfig = $settings['shipping_config'][$providerKey] ?? null;
-                    dd($providerConfig);
+                    
                     if ($providerConfig) {
                         // Initialize appropriate shipping service based on provider
                         if (strtolower($provider->name) === 'shiprocket') {
