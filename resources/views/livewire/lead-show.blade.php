@@ -7,45 +7,11 @@
                     <div class="flex items-center gap-4">
                         <!-- Previous/Next Navigation -->
                         <div class="flex items-center gap-2">
-                            @if ($previousLeadId)
-                                <a href="{{ route('leads.show', $previousLeadId) }}"
-                                    class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                                    title="Previous Lead">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </a>
-                            @else
-                                <button disabled
-                                    class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
-                                    title="No Previous Lead">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                            @endif
+                            <a href="{{ route('leads.index') }}"
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Back to Leads
+                            </a>
 
-                            @if ($nextLeadId)
-                                <a href="{{ route('leads.show', $nextLeadId) }}"
-                                    class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                                    title="Next Lead">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            @else
-                                <button disabled
-                                    class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
-                                    title="No Next Lead">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-                            @endif
                         </div>
 
                         <div class="border-l border-gray-300 h-8"></div>
@@ -56,6 +22,46 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
+                        
+                        @if ($previousLeadId)
+                            <a href="{{ route('leads.show', $previousLeadId) }}"
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                title="Previous Lead">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </a>
+                        @else
+                            <button disabled
+                                class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
+                                title="No Previous Lead">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                        @endif
+
+                        @if ($nextLeadId)
+                            <a href="{{ route('leads.show', $nextLeadId) }}"
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                title="Next Lead">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        @else
+                            <button disabled
+                                class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
+                                title="No Next Lead">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        @endif
                         <a href="{{ route('leads.edit', $lead->id) }}"
                             class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,10 +69,6 @@
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Edit
-                        </a>
-                        <a href="{{ route('leads.index') }}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                            Back to Leads
                         </a>
                     </div>
                 </div>
@@ -83,41 +85,35 @@
                             <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500 mb-2">Phone</dt>
-                                
+
                                     <dd>
                                         <!-- Phone Number -->
                                         <div class="text-lg font-semibold text-gray-900 mb-3">
                                             {{ $lead->phone }}
                                         </div>
-                                
+
                                         <!-- Action Buttons -->
                                         <div class="flex gap-2">
-                                
+
                                             <!-- Copy -->
-                                            <button 
-                                                onclick="copyPhone('{{ $lead->phone }}')" 
-                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 active:scale-95 transition"
-                                            >
+                                            <button onclick="copyPhone('{{ $lead->phone }}')"
+                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 active:scale-95 transition">
                                                 📋 Copy
                                             </button>
-                                
+
                                             <!-- Call -->
-                                            <a wire:click="quickAddCall"
-                                                href="tel:{{ $lead->phone }}" 
-                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-500 text-green-600 text-sm font-medium hover:bg-green-50 active:scale-95 transition"
-                                            >
+                                            <a wire:click="quickAddCall" href="tel:{{ $lead->phone }}"
+                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-500 text-green-600 text-sm font-medium hover:bg-green-50 active:scale-95 transition">
                                                 📞 Call
                                             </a>
-                                
+
                                             <!-- WhatsApp -->
-                                            <a wire:click="quickAddWhastapp"
-                                                href="https://wa.me/91{{ $lead->phone }}" 
+                                            <a wire:click="quickAddWhastapp" href="https://wa.me/91{{ $lead->phone }}"
                                                 target="_blank"
-                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-600 text-green-700 text-sm font-medium hover:bg-green-100 active:scale-95 transition"
-                                            >
+                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-600 text-green-700 text-sm font-medium hover:bg-green-100 active:scale-95 transition">
                                                 💬 WhatsApp
                                             </a>
-                                
+
                                         </div>
                                     </dd>
                                 </div>
@@ -501,4 +497,4 @@
     function copyPhone(phone) {
         navigator.clipboard.writeText(phone);
     }
-    </script>
+</script>
