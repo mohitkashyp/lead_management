@@ -76,7 +76,7 @@
                                 Source
                             </label>
 
-                            <select wire:model="source_id" class="w-full border-gray-300 rounded-md shadow-sm">
+                            <select wire:model="lead_source_id" class="w-full border-gray-300 rounded-md shadow-sm">
 
                                 <option value="">Select Source</option>
 
@@ -89,7 +89,54 @@
                             </select>
 
                         </div>
+                        <!-- Address Section -->
+                        <div class="md:col-span-2 border-t pt-6">
+                            <h2 class="text-lg font-semibold text-gray-800 mb-4">
+                                Address Details
+                            </h2>
+                        </div>
 
+                        <!-- Address -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Address
+                            </label>
+
+                            <textarea wire:model="address" rows="3" class="w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        </div>
+
+                        <!-- City -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                City
+                            </label>
+
+                            <input type="text" wire:model="city" class="w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+
+                        <!-- State -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                State
+                            </label>
+
+                            <input type="text" wire:model="state"
+                                class="w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+
+                        <!-- Pincode -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Pincode
+                            </label>
+
+                            <input type="text" wire:model="pincode"
+                                class="w-full border-gray-300 rounded-md shadow-sm">
+
+                            @error('pincode')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
 
                         <!-- Status -->
                         <div>
