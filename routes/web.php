@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', OrdersList::class)->name('index');
         Route::get('/create/{lead?}', OrderCreate::class)->name('create');
+        Route::get('/{id}', \App\Livewire\OrderShow::class)->name('orders.show');
     });
 
 

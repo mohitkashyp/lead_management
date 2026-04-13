@@ -90,7 +90,7 @@
 
                                 <td class="px-6 py-4 text-right text-sm">
 
-                                    <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                    <a href="/orders/{{ $order->id }}" class="text-indigo-600 hover:text-indigo-900 mr-3">
                                         View
                                     </a>
 
