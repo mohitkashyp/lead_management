@@ -13,11 +13,11 @@ class ShiprocketService
     protected $password;
     protected $token;
 
-    public function __construct()
+    public function __construct($api_key,$api_secreat,$url)
     {
-        $this->baseUrl = config('services.shiprocket.api_url', 'https://apiv2.shiprocket.in/v1/external');
-        $this->email = config('services.shiprocket.email');
-        $this->password = config('services.shiprocket.password');
+        $this->baseUrl =$url;
+        $this->email = $api_key;
+        $this->password = $api_secreat;
     }
 
     /**
@@ -50,7 +50,7 @@ class ShiprocketService
         $orderData = [
             'order_id' => $order->order_number,
             'order_date' => $order->created_at->format('Y-m-d H:i'),
-            'pickup_location' => config('services.shiprocket.pickup_location', 'Primary'),
+            'pickup_location' => config('services.shiprocket.pickup_location', 'work'),
             'channel_id' => config('services.shiprocket.channel_id', ''),
             'billing_customer_name' => $order->customer->name,
             'billing_last_name' => '',

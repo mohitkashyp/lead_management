@@ -370,11 +370,11 @@ class OrderCreate extends Component
                                 $shippingService = new ShipmozoService();
                                 
                                 // Configure if needed (override config values)
-                                if (!empty($providerConfig['public_key'])) {
-                                    $shippingService->setPublicKey($providerConfig['public_key']);
+                                if (!empty($providerConfig['api_key'])) {
+                                    $shippingService->setPublicKey($providerConfig['api_key']);
                                 }
-                                if (!empty($providerConfig['private_key'])) {
-                                    $shippingService->setPrivateKey($providerConfig['private_key']);
+                                if (!empty($providerConfig['api_secret'])) {
+                                    $shippingService->setPrivateKey($providerConfig['api_secret']);
                                 }
                                 if (!empty($providerConfig['api_endpoint'])) {
                                     $shippingService->setBaseUrl($providerConfig['api_endpoint']);
@@ -386,7 +386,7 @@ class OrderCreate extends Component
                                 // Get warehouse ID (you might need to fetch or create one)
                                 $warehouses = $shippingService->getWarehouses();
                                 $warehouseId = null;
-                                dd($warehouseId);
+                                
                                 if (!empty($warehouses)) {
                                     // Use first active warehouse or default
                                     foreach ($warehouses as $warehouse) {
@@ -411,7 +411,7 @@ class OrderCreate extends Component
                                 
                                 // Push order to Shipmozo
                                 $response = $shippingService->pushOrder($order, $warehouseId);
-                                dd($response);
+                                
                                 // Check response and update shipment
                                 if ($response && isset($response['result']) && $response['result'] === '1') {
                                     $orderData = $response['data'];

@@ -102,7 +102,7 @@ class OrganizationEdit extends Component
                 'api_key' => $settings['shipping_config'][$providerKey]['api_key'] ?? '',
                 'api_secret' => $settings['shipping_config'][$providerKey]['api_secret'] ?? '',
                 'api_endpoint' => $settings['shipping_config'][$providerKey]['api_endpoint'] ?? $provider->api_endpoint,
-                'pickup_location' => $settings['shipping_config'][$providerKey]['pickup_location'] ?? '',
+                'pickup_location' => $settings['shipping_config'][$providerKey]['pickup_location'] ?? 'work',
                 'pickup_name' => $settings['shipping_config'][$providerKey]['pickup_name'] ?? $this->organization->name,
                 'pickup_phone' => $settings['shipping_config'][$providerKey]['pickup_phone'] ?? $this->organization->phone,
                 'pickup_address' => $settings['shipping_config'][$providerKey]['pickup_address'] ?? $this->organization->address,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ShippingController;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Dashboard;
 use App\Livewire\FollowupsDashboard;
@@ -92,6 +93,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/repurchase', RepurchaseManagement::class)->name('repurchase.index');
     Route::get('/followups', FollowupsDashboard::class)->name('followups.dashboard');
+    Route::get('/ship',[ShippingController::class,'test']);
 
 
 

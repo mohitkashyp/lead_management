@@ -112,12 +112,11 @@ class ShipmozoService
         $orderData = [
             'order_id' => $order->order_number,
             'order_date' => $order->created_at->format('Y-m-d'),
-            'order_type' => $order->order_type ?? 'ESSENTIALS',
             'consignee_name' => $order->customer->name,
             'consignee_phone' => $order->customer->phone,
             'consignee_alternate_phone' => $order->customer->alternate_phone ?? '',
             'consignee_email' => $order->customer->email ?? '',
-            'consignee_address_line_one' => $order->shipping_address_line_one,
+            'consignee_address_line_one' => $order->shipping_address,
             'consignee_address_line_two' => $order->shipping_address_line_two ?? '',
             'consignee_pin_code' => $order->shipping_pincode,
             'consignee_city' => $order->shipping_city,
@@ -125,6 +124,7 @@ class ShipmozoService
             'product_detail' => $this->formatOrderItems($order),
             'payment_type' => $order->payment_method === 'cod' ? 'COD' : 'PREPAID',
             'cod_amount' => $order->payment_method === 'cod' ? (string)$order->total : '',
+            'shipping_charges' => $order->payment_method === 'cod' ? (string)$order->shipping_cost : '',
             'weight' => $this->calculateWeight($order) * 1000, // Convert to grams as per API
             'length' => $order->length ?? 10,
             'width' => $order->width ?? 10,
@@ -142,6 +142,7 @@ class ShipmozoService
             if ($result['result'] === '1') {
                 return $result;
             }
+            dd($result['message']);
             throw new Exception($result['message']);
         }
 
@@ -376,6 +377,7 @@ class ShipmozoService
      */
     public function getWarehouses()
     {
+       
         $response = Http::withHeaders($this->getHeaders())
             ->get($this->baseUrl . '/get-warehouses');
 
