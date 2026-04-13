@@ -30,8 +30,8 @@ class LeadCreate extends Component
     protected $rules = [
         'name' => 'required|string|max:255',
         'email' => 'nullable|email|max:255',
-        'phone' => 'required|string|max:20',
-        'alternate_phone' => 'nullable|string|max:20',
+        'phone' => 'required|string|min:10|max:20',
+        'alternate_phone' => 'nullable|string|max:20|min:10',
         'lead_source_id' => 'required|exists:lead_sources,id',
         'lead_status_id' => 'required|exists:lead_statuses,id',
         'assigned_to' => 'nullable|exists:users,id',
@@ -60,7 +60,13 @@ class LeadCreate extends Component
     public function save()
     {
         $this->validate();
+        $existingLead = Lead::where('phone', $this->phone)->first();
 
+        if ($existingLead) {
+            session()->flash('info', 'Lead already exists. Redirected to existing lead.');
+    
+            return redirect()->route('leads.show', $existingLead->id);
+        }
         $lead = Lead::create([
             'name' => $this->name,
             'email' => $this->email,
