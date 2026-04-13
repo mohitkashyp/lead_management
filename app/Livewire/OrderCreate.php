@@ -13,6 +13,7 @@ use App\Services\ShipmozoService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class OrderCreate extends Component
 {
@@ -20,7 +21,7 @@ class OrderCreate extends Component
     public $lead;
     public $customer_id;
     public $customer;
-    
+
     // Order fields
     public $payment_method = 'cod';
     public $payment_status = 'pending';
@@ -34,18 +35,18 @@ class OrderCreate extends Component
     public $discount = 0;
     public $shipping_cost = 0;
     // Removed: public $tax_rate = 18; // Tax is now per-product
-    
+
     // Shipping provider
     public $available_shipping_providers = [];
     public $selected_shipping_provider_id;
     public $create_shipment = false;
     public $organization = false;
     public $shipping_provider_selected = null;
-    
+
     // Order items
     public $items = [];
     public $products;
-    
+
     // Quick convert flag
     public $convertingLead = false;
 
@@ -66,7 +67,7 @@ class OrderCreate extends Component
 
     public function mount($lead = null)
     {
-       // $this->organization=Auth::user()->current_organization_id;
+        // $this->organization=Auth::user()->current_organization_id;
         $this->products = Product::where('organization_id', Auth::user()->current_organization_id)
             ->where('is_active', true)
             ->get();
@@ -77,7 +78,7 @@ class OrderCreate extends Component
         if ($lead) {
             $this->lead_id = $lead;
             $this->lead = Lead::with('customer')->findOrFail($lead);
-            
+
             // If lead already has customer, use it
             if ($this->lead->customer_id) {
                 $this->customer_id = $this->lead->customer_id;
@@ -100,10 +101,10 @@ class OrderCreate extends Component
     {
         $organization = Auth::user()->currentOrganization;
         $settings = $organization->settings ?? [];
-        
+
         // Get enabled shipping provider IDs
         $enabledProviderIds = $settings['shipping_providers'] ?? [];
-        
+
         if (!empty($enabledProviderIds)) {
             $this->available_shipping_providers = ShippingProvider::whereIn('id', $enabledProviderIds)
                 ->where('is_active', true)
@@ -111,7 +112,7 @@ class OrderCreate extends Component
         } else {
             $this->available_shipping_providers = collect([]);
         }
-        
+
         // Auto-select first provider if only one available
         if ($this->available_shipping_providers && $this->available_shipping_providers->count() === 1) {
             $this->selected_shipping_provider_id = $this->available_shipping_providers->first()->id;
@@ -157,9 +158,9 @@ class OrderCreate extends Component
             $this->customer = $this->lead->convertToCustomer();
             $this->customer_id = $this->customer->id;
             $this->convertingLead = false;
-            
+
             session()->flash('success', 'Lead converted to customer successfully!');
-            
+
             // Log activity
             $this->lead->activities()->create([
                 'user_id' => Auth::id(),
@@ -168,7 +169,7 @@ class OrderCreate extends Component
                 'description' => 'Lead was converted to customer: ' . $this->customer->name,
                 'activity_date' => now(),
             ]);
-            
+
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to convert lead: ' . $e->getMessage());
         }
@@ -196,7 +197,7 @@ class OrderCreate extends Component
         if (strpos($key, 'product_id') !== false) {
             $index = explode('.', $key)[0];
             $productId = $this->items[$index]['product_id'];
-            
+
             if ($productId) {
                 $product = Product::find($productId);
                 if ($product) {
@@ -245,7 +246,7 @@ class OrderCreate extends Component
         // If converting lead, do it first
         if ($this->convertingLead && $this->lead) {
             $this->quickConvertLead();
-            
+
             if (!$this->customer_id) {
                 return; // Conversion failed
             }
@@ -282,12 +283,12 @@ class OrderCreate extends Component
             // Create order items
             foreach ($this->items as $item) {
                 $product = Product::find($item['product_id']);
-                
+
                 $itemSubtotal = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
                 $taxRate = $product->getTaxRate();
                 $itemTax = ($itemSubtotal * $taxRate) / 100;
                 $itemTotal = $itemSubtotal + $itemTax;
-                
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
@@ -328,10 +329,10 @@ class OrderCreate extends Component
             }
 
             // Create shipment if requested
-             if ($this->create_shipment && $this->selected_shipping_provider_id) {
+            if ($this->create_shipment && $this->selected_shipping_provider_id) {
                 try {
                     $provider = ShippingProvider::find($this->selected_shipping_provider_id);
-                    
+
                     // Create shipment record
                     $shipment = \App\Models\Shipment::create([
                         'order_id' => $order->id,
@@ -344,7 +345,7 @@ class OrderCreate extends Component
                     $settings = $organization->settings ?? [];
                     $providerKey = strtolower(str_replace(' ', '_', $provider->name));
                     $providerConfig = $settings['shipping_config'][$providerKey] ?? null;
-                    
+
                     if ($providerConfig) {
                         // Initialize appropriate shipping service based on provider
                         if (strtolower($provider->name) === 'shiprocket') {
@@ -353,10 +354,10 @@ class OrderCreate extends Component
                                 $providerConfig['api_secret'],
                                 $providerConfig['api_endpoint'] ?? $provider->api_endpoint
                             );
-                            
+
                             // Create order on Shiprocket
                             $response = $shippingService->createOrder($order);
-                            
+
                             if ($response && isset($response['order_id'])) {
                                 $shipment->update([
                                     'tracking_number' => $response['order_id'],
@@ -368,7 +369,7 @@ class OrderCreate extends Component
                             try {
                                 // Initialize the service
                                 $shippingService = new ShipmozoService();
-                                
+
                                 // Configure if needed (override config values)
                                 if (!empty($providerConfig['api_key'])) {
                                     $shippingService->setPublicKey($providerConfig['api_key']);
@@ -379,14 +380,14 @@ class OrderCreate extends Component
                                 if (!empty($providerConfig['api_endpoint'])) {
                                     $shippingService->setBaseUrl($providerConfig['api_endpoint']);
                                 }
-                                
+
                                 // First, check if API is working
                                 $status = $shippingService->checkApiStatus();
-                                
+
                                 // Get warehouse ID (you might need to fetch or create one)
                                 $warehouses = $shippingService->getWarehouses();
                                 $warehouseId = null;
-                                
+
                                 if (!empty($warehouses)) {
                                     // Use first active warehouse or default
                                     foreach ($warehouses as $warehouse) {
@@ -396,7 +397,7 @@ class OrderCreate extends Component
                                         }
                                     }
                                 }
-                                
+
                                 if (!$warehouseId) {
                                     // Create a warehouse if none exists
                                     $warehouseId = $shippingService->createWarehouse([
@@ -408,14 +409,14 @@ class OrderCreate extends Component
                                         'pin_code' => $order->shipping_pincode ?? '110001',
                                     ]);
                                 }
-                                
+
                                 // Push order to Shipmozo
                                 $response = $shippingService->pushOrder($order, $warehouseId);
-                                
+
                                 // Check response and update shipment
                                 if ($response && isset($response['result']) && $response['result'] === '1') {
                                     $orderData = $response['data'];
-                                    
+
                                     $shipment->update([
                                         'tracking_number' => $orderData['order_id'] ?? $orderData['reference_id'],
                                         'reference_id' => $orderData['reference_id'] ?? null,
@@ -423,20 +424,20 @@ class OrderCreate extends Component
                                         'tracking_history' => json_encode([$response]),
                                         'shipmozo_response' => json_encode($response),
                                     ]);
-                                    
-                                   
-                                    
+
+
+
                                 } else {
                                     throw new Exception($response['message'] ?? 'Unknown error occurred');
                                 }
-                                
+
                             } catch (Exception $e) {
-                                
+
                                 $shipment->update([
                                     'status' => 'failed',
                                     'error_message' => $e->getMessage(),
                                 ]);
-                                
+
                                 throw $e;
                             }
                         }
@@ -449,11 +450,11 @@ class OrderCreate extends Component
                     session()->flash('shipment_error', 'Failed to create shipment: ' . $e->getMessage());
                 }
             }
- 
+
             DB::commit();
 
             session()->flash('success', 'Order created successfully! Order #: ' . $order->order_number);
-            
+
             return redirect()->route('orders.index');
 
         } catch (\Exception $e) {
@@ -461,6 +462,49 @@ class OrderCreate extends Component
             session()->flash('error', 'Failed to create order: ' . $e->getMessage());
         }
     }
+    
+
+    
+
+public function updatedShippingPincode($value)
+{
+    // Only run when 6 digit pincode
+    if (strlen($value) == 6) {
+
+        try {
+            $response = Http::timeout(5)
+                ->retry(2, 200)
+                ->get("https://api.postalpincode.in/pincode/" . $value);
+
+            if ($response->successful()) {
+
+                $data = $response->json();
+
+                // Check success + data exists
+                if (
+                    isset($data[0]['Status']) &&
+                    $data[0]['Status'] === 'Success' &&
+                    !empty($data[0]['PostOffice'])
+                ) {
+                    $postOffice = $data[0]['PostOffice'][0];
+
+                    $this->shipping_city = $postOffice['District'] ?? '';
+                    $this->shipping_state = $postOffice['State'] ?? '';
+                } else {
+                    $this->shipping_city = '';
+                    $this->shipping_state = '';
+                }
+            }
+
+        } catch (\Exception $e) {
+            // Important: handle connection error (your cURL issue)
+            $this->shipping_city = '';
+            $this->shipping_state = '';
+
+            logger("Pincode API Error: " . $e->getMessage());
+        }
+    }
+}
 
     public function render()
     {
