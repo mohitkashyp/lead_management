@@ -102,7 +102,7 @@
                                             </button>
                                 
                                             <!-- Call -->
-                                            <a 
+                                            <a wire:click="quickAddCall"
                                                 href="tel:{{ $lead->phone }}" 
                                                 class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-500 text-green-600 text-sm font-medium hover:bg-green-50 active:scale-95 transition"
                                             >
@@ -110,7 +110,7 @@
                                             </a>
                                 
                                             <!-- WhatsApp -->
-                                            <a 
+                                            <a wire:click="quickAddWhastapp"
                                                 href="https://wa.me/91{{ $lead->phone }}" 
                                                 target="_blank"
                                                 class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-600 text-green-700 text-sm font-medium hover:bg-green-100 active:scale-95 transition"
@@ -497,3 +497,8 @@
         </div>
     </div>
 </div>
+<script>
+    function copyPhone(phone) {
+        navigator.clipboard.writeText(phone);
+    }
+    </script>

@@ -37,7 +37,7 @@ class LeadShow extends Component
     public function mount($lead)
     {
         $this->lead = Lead::with(['source', 'status', 'assignedTo', 'customer'])
-        
+
             ->findOrFail($lead);
 
         $this->loadActivities();
@@ -56,7 +56,7 @@ class LeadShow extends Component
     public function loadNavigation()
     {
         $user = Auth::user();
-        
+
         // Get base query with same filters as list
         $baseQuery = Lead::where('organization_id', $user->currentOrganization->id);
 
@@ -145,6 +145,20 @@ class LeadShow extends Component
         session()->flash('success', 'Email activity added!');
         $this->loadActivities();
     }
+    public function quickAddWhastapp()
+    {
+        LeadActivity::create([
+            'lead_id' => $this->lead->id,
+            'user_id' => Auth::id(),
+            'activity_type' => 'email',
+            'subject' => 'Whatsapp message Sent',
+            'description' => 'Whatsapp message Sent',
+            'activity_date' => now(),
+        ]);
+
+        session()->flash('success', 'Whsapp activity added!');
+        $this->loadActivities();
+    }
 
     public function updateStatus()
     {
@@ -170,6 +184,42 @@ class LeadShow extends Component
             $this->loadActivities();
             $this->lead->refresh();
         }
+    }
+    public function quickAddNote()
+    {
+        if (!$this->quick_note)
+            return;
+
+        $text = strtolower($this->quick_note);
+
+        // 🔍 Detect type automatically
+        if (str_contains($text, 'call')) {
+            $type = 'call';
+            $subject = 'Call Log';
+        } elseif (str_contains($text, 'whatsapp') || str_contains($text, 'msg') || str_contains($text, 'message')) {
+            $type = 'other';
+            $subject = 'Message Sent';
+        } elseif (str_contains($text, 'email')) {
+            $type = 'email';
+            $subject = 'Email Log';
+        } else {
+            $type = 'note';
+            $subject = 'Quick Note';
+        }
+
+        LeadActivity::create([
+            'lead_id' => $this->lead->id,
+            'user_id' => Auth::id(),
+            'activity_type' => $type,
+            'subject' => $subject,
+            'description' => $this->quick_note,
+            'activity_date' => now(),
+        ]);
+
+        $this->quick_note = '';
+
+        session()->flash('success', 'Activity logged!');
+        $this->loadActivities();
     }
 
     public function convertToCustomer()
