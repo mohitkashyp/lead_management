@@ -93,7 +93,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/repurchase', RepurchaseManagement::class)->name('repurchase.index');
     Route::get('/followups', FollowupsDashboard::class)->name('followups.dashboard');
-    Route::get('/ship',[ShippingController::class,'test']);
+    Route::get('/ship',[ShippingController::class,'test2']);
 
 
 

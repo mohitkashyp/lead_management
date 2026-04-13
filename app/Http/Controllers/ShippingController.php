@@ -11,11 +11,22 @@ use App\Models\User;
 use App\Services\ShipmozoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class ShippingController extends Controller
 {
+    function test2(){
+        $response = Http::timeout(15)
+        ->withOptions([
+            'verify' => false,  // Disable SSL peer verification
+        ])        
+        ->retry(4, 200)
+                ->get("http://api.postalpincode.in/pincode/151001");
+                dd($response);
+    }
     function test()
     {
+
         $order= Order::with('items')->latest()->first();
        
         $provider = ShippingProvider::find(2);

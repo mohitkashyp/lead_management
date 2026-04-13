@@ -21,6 +21,7 @@ class OrderCreate extends Component
     public $lead;
     public $customer_id;
     public $customer;
+    public $gst_type = 'inclusive'; // default
 
     // Order fields
     public $payment_method = 'cod';
@@ -222,22 +223,39 @@ class OrderCreate extends Component
     public function getTaxProperty()
     {
         $totalTax = 0;
+
         foreach ($this->items as $item) {
             if (isset($item['product_id']) && isset($item['quantity']) && isset($item['price'])) {
+
                 $product = Product::find($item['product_id']);
-                if ($product) {
-                    $itemTotal = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
-                    $taxRate = $product->getTaxRate();
-                    $itemTax = ($itemTotal * $taxRate) / 100;
-                    $totalTax += $itemTax;
+                if (!$product)
+                    continue;
+
+                $taxRate = $product->getTaxRate();
+                $baseAmount = ($item['quantity'] * $item['price']) - ($item['discount'] ?? 0);
+
+                if ($this->gst_type === 'inclusive') {
+                    // GST included in price
+                    $itemTax = $baseAmount * ($taxRate / (100 + $taxRate));
+                } else {
+                    // GST extra
+                    $itemTax = ($baseAmount * $taxRate) / 100;
                 }
+
+                $totalTax += $itemTax;
             }
         }
+
         return $totalTax;
     }
 
     public function getTotalProperty()
     {
+        if ($this->gst_type === 'inclusive') {
+            // Tax already included in subtotal
+            return $this->subtotal + $this->shipping_cost - $this->discount;
+        }
+
         return $this->subtotal + $this->tax + $this->shipping_cost - $this->discount;
     }
 
@@ -462,49 +480,49 @@ class OrderCreate extends Component
             session()->flash('error', 'Failed to create order: ' . $e->getMessage());
         }
     }
-    
 
-    
 
-public function updatedShippingPincode($value)
-{
-    // Only run when 6 digit pincode
-    if (strlen($value) == 6) {
 
-        try {
-            $response = Http::timeout(5)
-                ->retry(2, 200)
-                ->get("https://api.postalpincode.in/pincode/" . $value);
 
-            if ($response->successful()) {
+    public function updatedShippingPincode($value)
+    {
+        // Only run when 6 digit pincode
+        if (strlen($value) == 6) {
 
-                $data = $response->json();
+            try {
+                $response = Http::timeout(15)
+                    ->retry(4, 200)
+                    ->get("http://api.postalpincode.in/pincode/151001" . $value);
 
-                // Check success + data exists
-                if (
-                    isset($data[0]['Status']) &&
-                    $data[0]['Status'] === 'Success' &&
-                    !empty($data[0]['PostOffice'])
-                ) {
-                    $postOffice = $data[0]['PostOffice'][0];
+                if ($response->successful()) {
 
-                    $this->shipping_city = $postOffice['District'] ?? '';
-                    $this->shipping_state = $postOffice['State'] ?? '';
-                } else {
-                    $this->shipping_city = '';
-                    $this->shipping_state = '';
+                    $data = $response->json();
+
+                    // Check success + data exists
+                    if (
+                        isset($data[0]['Status']) &&
+                        $data[0]['Status'] === 'Success' &&
+                        !empty($data[0]['PostOffice'])
+                    ) {
+                        $postOffice = $data[0]['PostOffice'][0];
+
+                        $this->shipping_city = $postOffice['District'] ?? '';
+                        $this->shipping_state = $postOffice['State'] ?? '';
+                    } else {
+                        $this->shipping_city = '';
+                        $this->shipping_state = '';
+                    }
                 }
+
+            } catch (\Exception $e) {
+                // Important: handle connection error (your cURL issue)
+                $this->shipping_city = '';
+                $this->shipping_state = '';
+
+                logger("Pincode API Error: " . $e->getMessage());
             }
-
-        } catch (\Exception $e) {
-            // Important: handle connection error (your cURL issue)
-            $this->shipping_city = '';
-            $this->shipping_state = '';
-
-            logger("Pincode API Error: " . $e->getMessage());
         }
     }
-}
 
     public function render()
     {
