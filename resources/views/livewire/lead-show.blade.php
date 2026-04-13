@@ -82,24 +82,44 @@
 
                             <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                                 <div>
-                                    <dt class="text-sm font-medium text-gray-500">Phone</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">{{ $lead->phone }}</dd>
-                                    <button onclick="copyPhone('{{ $lead->phone }}')"
-                                        class="text-gray-500 hover:text-indigo-600" title="Copy">
-                                        📋
-                                    </button>
-
-                                    <!-- Call Button -->
-                                    <a href="tel:{{ $lead->phone }}" class="text-green-600 hover:text-green-800"
-                                        title="Call">
-                                        📞
-                                    </a>
-
-                                    <!-- WhatsApp Button -->
-                                    <a href="https://wa.me/91{{ $lead->phone }}" target="_blank"
-                                        class="text-green-500 hover:text-green-700" title="WhatsApp">
-                                        💬
-                                    </a>
+                                    <dt class="text-sm font-medium text-gray-500 mb-2">Phone</dt>
+                                
+                                    <dd>
+                                        <!-- Phone Number -->
+                                        <div class="text-lg font-semibold text-gray-900 mb-3">
+                                            {{ $lead->phone }}
+                                        </div>
+                                
+                                        <!-- Action Buttons -->
+                                        <div class="flex gap-2">
+                                
+                                            <!-- Copy -->
+                                            <button 
+                                                onclick="copyPhone('{{ $lead->phone }}')" 
+                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 active:scale-95 transition"
+                                            >
+                                                📋 Copy
+                                            </button>
+                                
+                                            <!-- Call -->
+                                            <a 
+                                                href="tel:{{ $lead->phone }}" 
+                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-500 text-green-600 text-sm font-medium hover:bg-green-50 active:scale-95 transition"
+                                            >
+                                                📞 Call
+                                            </a>
+                                
+                                            <!-- WhatsApp -->
+                                            <a 
+                                                href="https://wa.me/91{{ $lead->phone }}" 
+                                                target="_blank"
+                                                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-600 text-green-700 text-sm font-medium hover:bg-green-100 active:scale-95 transition"
+                                            >
+                                                💬 WhatsApp
+                                            </a>
+                                
+                                        </div>
+                                    </dd>
                                 </div>
 
                                 @if ($lead->email)
