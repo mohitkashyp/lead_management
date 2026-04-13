@@ -56,11 +56,14 @@ class OrdersList extends Component
 
     public function render()
     {
+        $user = Auth::user();
+        $organization_id=$user->current_organization_id;
         $orders = Order::with([
                 'customer',
                 'lead',
                 'createdBy'
             ])
+            ->where('organization_id',$organization_id)
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('order_number','like','%'.$this->search.'%')
