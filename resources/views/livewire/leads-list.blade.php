@@ -116,7 +116,7 @@
                                 </th>
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
+                                    Date Added
                                 </th>
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
@@ -190,11 +190,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                            style="background-color: {{ $lead->status->color }}20; color: {{ $lead->status->color }}">
-                                            {{ $lead->status->display_name }}
-                                        </span>
+                                        {{ $lead->created_at->format('M d, Y h:i A') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
                                         {{ $lead->assignedTo?->name ?? 'Unassigned' }}
