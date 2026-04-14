@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Http\Controllers\CommonController;
 use Livewire\Component;
 use App\Models\Lead;
 use App\Models\Order;
@@ -9,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\OrderItem;
 use App\Models\ShippingProvider;
+use App\Services\PincodeService;
 use App\Services\ShipmozoService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -486,42 +488,14 @@ class OrderCreate extends Component
 
     public function updatedShippingPincode($value)
     {
-        // Only run when 6 digit pincode
-        if (strlen($value) == 6) {
+        $pincodeService = new PincodeService();
 
-            try {
-                $response = Http::timeout(15)
-                    ->retry(4, 200)
-                    ->get("http://api.postalpincode.in/pincode/151001" . $value);
+        $location = $pincodeService->getLocationByPincode($value);
+    
+        $this->shipping_city = $location['city'];
+        $this->shipping_state = $location['state'];
 
-                if ($response->successful()) {
-
-                    $data = $response->json();
-
-                    // Check success + data exists
-                    if (
-                        isset($data[0]['Status']) &&
-                        $data[0]['Status'] === 'Success' &&
-                        !empty($data[0]['PostOffice'])
-                    ) {
-                        $postOffice = $data[0]['PostOffice'][0];
-
-                        $this->shipping_city = $postOffice['District'] ?? '';
-                        $this->shipping_state = $postOffice['State'] ?? '';
-                    } else {
-                        $this->shipping_city = '';
-                        $this->shipping_state = '';
-                    }
-                }
-
-            } catch (\Exception $e) {
-                // Important: handle connection error (your cURL issue)
-                $this->shipping_city = '';
-                $this->shipping_state = '';
-
-                logger("Pincode API Error: " . $e->getMessage());
-            }
-        }
+        
     }
 
     public function render()

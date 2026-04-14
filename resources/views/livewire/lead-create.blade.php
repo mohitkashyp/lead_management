@@ -159,7 +159,7 @@
                     <!-- Address Information -->
                     <div class="px-4 py-5 sm:p-6 border-t border-gray-200">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
-                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div class="grid grid-cols-2 gap-6 sm:grid-cols-2">
                             <!-- Address -->
                             <div class="sm:col-span-2">
                                 <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
@@ -167,6 +167,12 @@
                                     class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
                             </div>
 
+                            <!-- Pincode -->
+                            <div>
+                                <label for="pincode" class="block text-sm font-medium text-gray-700">Pincode</label>
+                                <input type="text"  id="pincode" wire:model.live.debounce.500ms="pincode"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
                             <!-- City -->
                             <div>
                                 <label for="city" class="block text-sm font-medium text-gray-700">City</label>
@@ -181,12 +187,6 @@
                                     class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                             </div>
 
-                            <!-- Pincode -->
-                            <div>
-                                <label for="pincode" class="block text-sm font-medium text-gray-700">Pincode</label>
-                                <input type="text" wire:model="pincode" id="pincode"
-                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            </div>
                         </div>
                     </div>
 

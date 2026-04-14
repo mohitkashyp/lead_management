@@ -7,6 +7,7 @@ use App\Models\Lead;
 use App\Models\LeadSource;
 use App\Models\LeadStatus;
 use App\Models\User;
+use App\Services\PincodeService;
 use Illuminate\Support\Facades\Auth;
 
 class LeadCreate extends Component
@@ -50,11 +51,22 @@ class LeadCreate extends Component
         // Set default status to 'new'
         $newStatus = LeadStatus::where('name', 'new')->first();
         $this->lead_status_id = $newStatus?->id;
-        
+
         // Auto-assign to current user if agent
         if (!Auth::user()->isAdmin()) {
             $this->assigned_to = Auth::id();
         }
+    }
+    public function updatedPincode($value)
+    {
+        $pincodeService = new PincodeService();
+
+        $location = $pincodeService->getLocationByPincode($value);
+
+        $this->city = $location['city'];
+        $this->state = $location['state'];
+
+
     }
 
     public function save()
@@ -64,7 +76,7 @@ class LeadCreate extends Component
 
         if ($existingLead) {
             session()->flash('info', 'Lead already exists. Redirected to existing lead.');
-    
+
             return redirect()->route('leads.show', $existingLead->id);
         }
         $lead = Lead::create([
@@ -96,7 +108,7 @@ class LeadCreate extends Component
         ]);
 
         session()->flash('success', 'Lead created successfully!');
-        
+
         return redirect()->route('leads.show', $lead->id);
     }
 

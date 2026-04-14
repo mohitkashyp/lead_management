@@ -227,6 +227,17 @@
 
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
+                                            <label for="shipping_pincode"
+                                                class="block text-sm font-medium text-gray-700">Pincode <span
+                                                    class="text-red-500">*</span></label>
+                                            <input type="text" wire:model.live.debounce.500ms="shipping_pincode"
+                                                id="shipping_pincode"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('shipping_pincode') border-red-500 @enderror">
+                                            @error('shipping_pincode')
+                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
                                             <label for="shipping_city"
                                                 class="block text-sm font-medium text-gray-700">City <span
                                                     class="text-red-500">*</span></label>
@@ -248,17 +259,7 @@
                                             @enderror
                                         </div>
 
-                                        <div>
-                                            <label for="shipping_pincode"
-                                                class="block text-sm font-medium text-gray-700">Pincode <span
-                                                    class="text-red-500">*</span></label>
-                                            <input type="text" wire:model.live="shipping_pincode"
-                                                id="shipping_pincode"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('shipping_pincode') border-red-500 @enderror">
-                                            @error('shipping_pincode')
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                        </div>
+                                        
                                     </div>
                                 </div>
                             </div>
