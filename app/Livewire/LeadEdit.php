@@ -76,6 +76,21 @@ class LeadEdit extends Component
             'state' => $this->state,
             'pincode' => $this->pincode,
         ]);
+        if ($lead->customer_id) {
+            $customer = $this->lead->customer;
+    
+            if ($customer) {
+                $customer->update([
+                    'name' => $this->name,
+                    'email' => $this->email,
+                    'phone' => $this->phone,
+                    'address' => $this->address,
+                    'city' => $this->city,
+                    'state' => $this->state,
+                    'pincode' => $this->pincode,
+                ]);
+            }
+        }
 
         session()->flash('success', 'Lead updated successfully.');
 
