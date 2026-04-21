@@ -31,21 +31,32 @@
                                         class="text-red-500">*</span></label>
                                 <input type="text" wire:model="phone" id="phone"
                                     oninput="
-                                let val = this.value;
-                        
-                                // 1. Remove spaces
-                                val = val.replace(/\s+/g, '');
-                        
-                                // 2. Remove +91 or 91 from start
-                                val = val.replace(/^\+91/, '').replace(/^91/, '');
-                        
-                                // 3. Remove non-digits
-                                val = val.replace(/\D/g, '');
-                        
-                                // 4. Limit to 10 digits
-                                this.value = val.substring(0,10);
+                               let val = this.value;
+
+// 1. Remove spaces
+val = val.replace(/\s+/g, '');
+
+// 2. Remove non-digits except +
+val = val.replace(/[^\d+]/g, '');
+
+// 3. Handle +91
+if (val.startsWith('+91')) {
+    val = val.substring(3);
+}
+// 4. Handle 91 only if length > 10 (i.e., country code case)
+else if (val.startsWith('91') && val.length > 10) {
+    val = val.substring(2);
+}
+
+// 5. Remove any remaining non-digits
+val = val.replace(/\D/g, '');
+
+// 6. Limit to 10 digits
+this.value = val.substring(0, 10);
                             "
-                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md @error('phone') border-red-500 @enderror">
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md @error('phone')
+border-red-500
+@enderror">
                                 @error('phone')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -70,7 +81,8 @@
                                 val = val.replace(/\D/g, '');
                         
                                 // 4. Limit to 10 digits
-                                this.value = val.substring(0,10);" class="mt-1
+                                this.value = val.substring(0,10);"
+                                    class="mt-1
                                     focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm
                                     border-gray-300 rounded-md">
                             </div>
@@ -170,7 +182,7 @@
                             <!-- Pincode -->
                             <div>
                                 <label for="pincode" class="block text-sm font-medium text-gray-700">Pincode</label>
-                                <input type="text"  id="pincode" wire:model.live.debounce.500ms="pincode"
+                                <input type="text" id="pincode" wire:model.live.debounce.500ms="pincode"
                                     class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                             </div>
                             <!-- City -->
